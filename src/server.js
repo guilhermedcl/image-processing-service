@@ -1,8 +1,26 @@
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configuração do multer para upload de arquivos
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limite
+    },
+    fileFilter: (req, file, cb) => {
+        // Permitir apenas imagens
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Apenas arquivos de imagem são permitidos'), false);
+        }
+    }
+});
 
 // Middleware básico
 app.use(express.json());
@@ -27,6 +45,34 @@ app.get('/', (req, res) => {
             process: '/process (POST)'
         }
     });
+});
+
+// Rota para processar imagens
+app.post('/process', upload.single('image'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                erro: 'Nenhuma imagem foi enviada'
+            });
+        }
+
+        // Por enquanto, apenas retorna info da imagem
+        res.json({
+            sucesso: true,
+            mensagem: 'Imagem recebida com sucesso',
+            arquivo: {
+                nome: req.file.originalname,
+                tamanho: req.file.size,
+                tipo: req.file.mimetype
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            erro: 'Erro ao processar imagem',
+            detalhes: error.message
+        });
+    }
 });
 
 // Iniciar servidor
