@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Image Processing Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .service-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        form {
+            margin-top: 10px;
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        input[type="submit"] {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🖼️ Processador de Imagens</h1>
+
+    <div class="service-section">
+        <h2>📤 Upload Original</h2>
+        <p>Faz upload da imagem sem processamento</p>
+        <form action="http://localhost:3000/process" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <input type="submit" value="Upload Original">
+        </form>
+    </div>
+
+    <div class="service-section">
+        <h2>📏 Redimensionamento</h2>
+        <p>Redimensiona a imagem para 300x200 pixels</p>
+        <form action="http://localhost:3000/process?width=300&height=200" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <input type="submit" value="Redimensionar (300x200)">
+        </form>
+    </div>
+
+    <div class="service-section">
+        <h2>🗜️ Compressão</h2>
+        <p>Comprime a imagem mantendo 50% da qualidade original</p>
+        <form action="http://localhost:3000/process?quality=50" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <input type="submit" value="Comprimir (50% qualidade)">
+        </form>
+    </div>
+
+    <div class="service-section">
+        <h2>⚡ Processamento Completo</h2>
+        <p>Redimensiona para 500x300 pixels + comprime com 70% de qualidade</p>
+        <form action="http://localhost:3000/process?width=500&height=300&quality=70" method="post"
+            enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <input type="submit" value="Redimensionar + Comprimir">
+        </form>
+    </div>
+
+    <div style="margin-top: 40px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
+        <h3>📋 Como usar:</h3>
+        <ol>
+            <li>Selecione uma imagem (jpg, png, webp)</li>
+            <li>Escolha o tipo de processamento desejado</li>
+            <li>Clique no botão correspondente</li>
+            <li>A resposta JSON conterá a imagem processada em base64</li>
+        </ol>
+
+        <h3>🔧 Parâmetros disponíveis:</h3>
+        <ul>
+            <li><strong>width</strong>: largura desejada (px)</li>
+            <li><strong>height</strong>: altura desejada (px)</li>
+            <li><strong>quality</strong>: qualidade da compressão (1-100)</li>
+        </ul>
+    </div>
+</body>
+
+</html>
