@@ -85,21 +85,44 @@
         </form>
     </div>
 
+    <div class="service-section">
+        <h2>🔄 Conversão para JPG</h2>
+        <p>Converte qualquer imagem para formato JPG com compressão otimizada</p>
+        <form action="http://localhost:3000/process?format=jpg&quality=85" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <input type="submit" value="Converter para JPG">
+        </form>
+    </div>
+
+    <div class="service-section">
+        <h2>🔄 Conversão para PNG</h2>
+        <p>Converte qualquer imagem para formato PNG (sem perda de qualidade)</p>
+        <form action="http://localhost:3000/process?format=png" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <input type="submit" value="Converter para PNG">
+        </form>
+    </div>
+
+    <div class="service-section">
+        <h2>🔄 Conversão para WebP</h2>
+        <p>Converte qualquer imagem para formato WebP (máxima compressão)</p>
+        <form action="http://localhost:3000/process?format=webp&quality=80" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <br>
+            <input type="submit" value="Converter para WebP">
+        </form>
+    </div>
+
     <div style="margin-top: 40px; padding: 20px; background: #e7f3ff; border-radius: 8px;">
         <h3>📋 Como usar:</h3>
         <ol>
-            <li>Selecione uma imagem (jpg, png, webp)</li>
             <li>Escolha o tipo de processamento desejado</li>
+            <li>Selecione e escolha uma imagem (jpg, png, webp)</li>
             <li>Clique no botão correspondente</li>
             <li>A resposta JSON conterá a imagem processada em base64</li>
         </ol>
-
-        <h3>🔧 Parâmetros disponíveis:</h3>
-        <ul>
-            <li><strong>width</strong>: largura desejada (px)</li>
-            <li><strong>height</strong>: altura desejada (px)</li>
-            <li><strong>quality</strong>: qualidade da compressão (1-100)</li>
-        </ul>
     </div>
 </body>
 

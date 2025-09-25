@@ -31,12 +31,13 @@ app.get('/api', (req, res) => {
         version: '1.0.0',
         endpoints: {
             health: '/health',
-            process: '/process (POST) - parâmetros: ?width=300&height=200&quality=80'
+            process: '/process (POST) - parâmetros: ?width=300&height=200&quality=80&format=jpg'
         },
         parametros: {
             width: 'largura desejada (opcional)',
             height: 'altura desejada (opcional)',
-            quality: 'qualidade da imagem 1-100 (padrão: 80)'
+            quality: 'qualidade da imagem 1-100 (padrão: 80)',
+            format: 'formato de saída: jpg, png, webp (opcional)'
         }
     });
 });
@@ -74,6 +75,7 @@ app.post('/process', (req, res) => {
             const width = parseInt(req.query.width) || null;
             const height = parseInt(req.query.height) || null;
             const quality = parseInt(req.query.quality) || 80;
+            const format = req.query.format || null; // jpg, png, webp
 
             // Processar a imagem com Sharp
             let processedImage = sharp(req.file.buffer);
@@ -86,13 +88,32 @@ app.post('/process', (req, res) => {
                 });
             }
 
-            // Aplicar compressão baseada no tipo
-            if (req.file.mimetype === 'image/jpeg') {
-                processedImage = processedImage.jpeg({ quality });
-            } else if (req.file.mimetype === 'image/png') {
-                processedImage = processedImage.png({ quality });
-            } else if (req.file.mimetype === 'image/webp') {
-                processedImage = processedImage.webp({ quality });
+            // Determinar formato final
+            let finalFormat = format;
+            let finalMimeType = req.file.mimetype;
+
+            if (format) {
+                // Conversão de formato solicitada
+                if (format === 'jpg' || format === 'jpeg') {
+                    processedImage = processedImage.jpeg({ quality });
+                    finalFormat = 'jpg';
+                    finalMimeType = 'image/jpeg';
+                } else if (format === 'png') {
+                    processedImage = processedImage.png({ quality });
+                    finalMimeType = 'image/png';
+                } else if (format === 'webp') {
+                    processedImage = processedImage.webp({ quality });
+                    finalMimeType = 'image/webp';
+                }
+            } else {
+                // Manter formato original com compressão
+                if (req.file.mimetype === 'image/jpeg') {
+                    processedImage = processedImage.jpeg({ quality });
+                } else if (req.file.mimetype === 'image/png') {
+                    processedImage = processedImage.png({ quality });
+                } else if (req.file.mimetype === 'image/webp') {
+                    processedImage = processedImage.webp({ quality });
+                }
             }
 
             const outputBuffer = await processedImage.toBuffer();
@@ -110,7 +131,9 @@ app.post('/process', (req, res) => {
                     largura: metadata.width,
                     altura: metadata.height,
                     tamanho: outputBuffer.length,
-                    qualidade: quality
+                    qualidade: quality,
+                    formato: finalFormat || req.file.mimetype.split('/')[1],
+                    tipo: finalMimeType
                 },
                 imagem: outputBuffer.toString('base64')
             });
