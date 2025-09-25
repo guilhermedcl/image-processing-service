@@ -1,26 +1,10 @@
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
+const sharp = require('sharp');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Configuração do multer para upload de arquivos
-const storage = multer.memoryStorage();
-const upload = multer({
-    storage: storage,
-    limits: {
-        fileSize: 10 * 1024 * 1024 // 10MB limite
-    },
-    fileFilter: (req, file, cb) => {
-        // Permitir apenas imagens
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Apenas arquivos de imagem são permitidos'), false);
-        }
-    }
-});
 
 // Middleware básico
 app.use(express.json());
@@ -35,44 +19,109 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Rota principal
+// Rota principal - interface web
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+// Rota de informações da API
+app.get('/api', (req, res) => {
     res.json({
-        message: 'Serviço de Processamento de Imagens',
+        message: 'Image Processing Service API',
         version: '1.0.0',
         endpoints: {
             health: '/health',
-            process: '/process (POST)'
+            process: '/process (POST) - parâmetros: ?width=300&height=200&quality=80'
+        },
+        parametros: {
+            width: 'largura desejada (opcional)',
+            height: 'altura desejada (opcional)',
+            quality: 'qualidade da imagem 1-100 (padrão: 80)'
         }
     });
 });
 
 // Rota para processar imagens
-app.post('/process', upload.single('image'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({
-                erro: 'Nenhuma imagem foi enviada'
+app.post('/process', (req, res) => {
+    const upload = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 10 * 1024 * 1024 },
+        fileFilter: (req, file, cb) => {
+            if (file.mimetype.startsWith('image/')) {
+                cb(null, true);
+            } else {
+                cb(new Error('Apenas arquivos de imagem são permitidos'), false);
+            }
+        }
+    }).single('image');
+
+    upload(req, res, async (err) => {
+        try {
+            if (err) {
+                return res.status(400).json({
+                    erro: 'Erro no upload',
+                    detalhes: err.message
+                });
+            }
+
+            if (!req.file) {
+                return res.status(400).json({
+                    erro: 'Nenhuma imagem foi enviada'
+                });
+            }
+
+            // Parâmetros do query string
+            const width = parseInt(req.query.width) || null;
+            const height = parseInt(req.query.height) || null;
+            const quality = parseInt(req.query.quality) || 80;
+
+            // Processar a imagem com Sharp
+            let processedImage = sharp(req.file.buffer);
+
+            // Redimensionar se largura ou altura foram especificadas
+            if (width || height) {
+                processedImage = processedImage.resize(width, height, {
+                    fit: 'inside',
+                    withoutEnlargement: true
+                });
+            }
+
+            // Aplicar compressão baseada no tipo
+            if (req.file.mimetype === 'image/jpeg') {
+                processedImage = processedImage.jpeg({ quality });
+            } else if (req.file.mimetype === 'image/png') {
+                processedImage = processedImage.png({ quality });
+            } else if (req.file.mimetype === 'image/webp') {
+                processedImage = processedImage.webp({ quality });
+            }
+
+            const outputBuffer = await processedImage.toBuffer();
+            const metadata = await sharp(outputBuffer).metadata();
+
+            res.json({
+                sucesso: true,
+                mensagem: 'Imagem processada com sucesso',
+                original: {
+                    nome: req.file.originalname,
+                    tamanho: req.file.size,
+                    tipo: req.file.mimetype
+                },
+                processada: {
+                    largura: metadata.width,
+                    altura: metadata.height,
+                    tamanho: outputBuffer.length,
+                    qualidade: quality
+                },
+                imagem: outputBuffer.toString('base64')
+            });
+
+        } catch (error) {
+            res.status(500).json({
+                erro: 'Erro ao processar imagem',
+                detalhes: error.message
             });
         }
-
-        // Por enquanto, apenas retorna info da imagem
-        res.json({
-            sucesso: true,
-            mensagem: 'Imagem recebida com sucesso',
-            arquivo: {
-                nome: req.file.originalname,
-                tamanho: req.file.size,
-                tipo: req.file.mimetype
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            erro: 'Erro ao processar imagem',
-            detalhes: error.message
-        });
-    }
+    });
 });
 
 // Iniciar servidor
